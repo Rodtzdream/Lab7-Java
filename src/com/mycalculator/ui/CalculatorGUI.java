@@ -7,6 +7,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Objects;
 
+/**
+ * This class represents the GUI for a calculator.
+ * It extends JFrame and implements ActionListener to handle button clicks.
+ */
 public class CalculatorGUI extends JFrame implements ActionListener {
 
     private final CalculatorLogic calculatorLogic = new CalculatorLogic();
@@ -29,6 +33,10 @@ public class CalculatorGUI extends JFrame implements ActionListener {
     private boolean calculated = false;
     private double memory = 0;
 
+    /**
+     * Constructs a new CalculatorGUI.
+     * Sets the title, default close operation, and initializes the components.
+     */
     public CalculatorGUI() {
         setTitle("Calculator");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -38,6 +46,10 @@ public class CalculatorGUI extends JFrame implements ActionListener {
         setLocationRelativeTo(null);
     }
 
+    /**
+     * Initializes the components of the calculator GUI.
+     * This includes the main label, additional text label, main text label, and buttons.
+     */
     private void initComponents() {
         JPanel centerPanel = new JPanel(new GridLayout(3, 1));
 
@@ -93,6 +105,12 @@ public class CalculatorGUI extends JFrame implements ActionListener {
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
+    /**
+     * Handles the action events from the buttons.
+     * This includes digit buttons, operation buttons, and memory buttons.
+     *
+     * @param e the action event
+     */
     @Override
     public void actionPerformed(ActionEvent e) {
         String command = e.getActionCommand();
@@ -157,6 +175,11 @@ public class CalculatorGUI extends JFrame implements ActionListener {
         }
     }
 
+    /**
+     * The main method that launches the calculator GUI.
+     *
+     * @param args the command-line arguments (not used)
+     */
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> new CalculatorGUI().setVisible(true));
     }
