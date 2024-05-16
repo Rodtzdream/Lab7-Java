@@ -1,3 +1,6 @@
+package com.mycalculator.ui;
+
+import com.mycalculator.logic.CalculatorLogic;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;

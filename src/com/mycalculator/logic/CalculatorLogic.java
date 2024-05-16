@@ -1,3 +1,5 @@
+package com.mycalculator.logic;
+
 public class CalculatorLogic {
 
     public double processNumbers(double firstNumber, double secondNumber, char action) {
