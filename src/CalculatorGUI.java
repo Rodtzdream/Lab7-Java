@@ -6,11 +6,9 @@ import java.util.Objects;
 
 public class CalculatorGUI extends JFrame implements ActionListener {
 
-    private JLabel mainLabel;
     private JLabel mainText;
     private JLabel additionalText;
-    private JButton[] buttons;
-    private String[] buttonLabels = {
+    private final String[] buttonLabels = {
             "MS", "MR", "M+", "M-",
             "%", "CE", "C", "Clear",
             "Sin", "Cos", "Tg", "Ctg",
@@ -21,7 +19,7 @@ public class CalculatorGUI extends JFrame implements ActionListener {
             "+/-", "0", ".", "="
     };
 
-    private double num1, num2;
+    private double num1;
     private char operator;
     private boolean calculated = false;
     private double memory = 0;
@@ -31,14 +29,14 @@ public class CalculatorGUI extends JFrame implements ActionListener {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         initComponents();
-        setSize(430, 750);
+        setSize(430, 700);
         setLocationRelativeTo(null);
     }
 
     private void initComponents() {
         JPanel centerPanel = new JPanel(new GridLayout(3, 1));
 
-        mainLabel = new JLabel("Calculator", SwingConstants.LEFT);
+        JLabel mainLabel = new JLabel("Calculator", SwingConstants.LEFT);
         mainLabel.setFont(new Font("Arial", Font.PLAIN, 30));
         mainLabel.setForeground(Color.WHITE);
         mainLabel.setBackground(new Color(35, 35, 35));
@@ -65,7 +63,7 @@ public class CalculatorGUI extends JFrame implements ActionListener {
         add(centerPanel, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel(new GridLayout(8, 4));
-        buttons = new JButton[buttonLabels.length];
+        JButton[] buttons = new JButton[buttonLabels.length];
         for (int i = 0; i < buttonLabels.length; i++) {
             buttons[i] = new JButton(buttonLabels[i]);
             buttons[i].setFont(new Font("Arial", Font.PLAIN, 18));
@@ -98,115 +96,104 @@ public class CalculatorGUI extends JFrame implements ActionListener {
                 mainText.setText("");
             mainText.setText(mainText.getText() + command);
             calculated = false;
-        } else if (command.equals(".")) {
-            if (!mainText.getText().contains("."))
-                mainText.setText(mainText.getText() + command);
-        } else if (command.equals("CE")) {
-            mainText.setText("0");
-        } else if (command.equals("C")) {
-            mainText.setText("0");
-            additionalText.setText("");
-        } else if (command.equals("Clear")) {
-            mainText.setText(mainText.getText().substring(0, mainText.getText().length() - 1));
-        } else if (command.charAt(0) == '=') {
-            if (!additionalText.getText().isEmpty() && !mainText.getText().isEmpty()) {
-                num2 = Double.parseDouble(mainText.getText());
-                double result = processNumbers(num1, num2, operator);
-                mainText.setText(Double.toString(result));
-                additionalText.setText("");
-                calculated = true;
-            }
-        } else if (command.equals("1/x")) {
-            if (!mainText.getText().isEmpty()) {
-                num1 = Double.parseDouble(mainText.getText());
-                if (num1 != 0)
-                    mainText.setText(String.valueOf(1 / num1));
-                additionalText.setText("");
-                calculated = true;
-            }
-        } else if (command.equals("x²")) {
-            if (!mainText.getText().isEmpty()) {
-                num1 = Double.parseDouble(mainText.getText());
-                mainText.setText(String.valueOf(num1 * num1));
-                additionalText.setText("");
-                calculated = true;
-            }
-        } else if (command.equals("√x")) {
-            if (!mainText.getText().isEmpty()) {
-                num1 = Double.parseDouble(mainText.getText());
-                mainText.setText(String.valueOf(Math.sqrt(num1)));
-                additionalText.setText("");
-                calculated = true;
-            }
-        } else if (command.equals("+/-")) {
-            if (!mainText.getText().isEmpty()) {
-                num1 = Double.parseDouble(mainText.getText());
-                additionalText.setText("");
-                mainText.setText(String.valueOf(-num1));
-            }
-        } else if (command.equals("Sin")) {
-            if (!mainText.getText().isEmpty()) {
-                num1 = Double.parseDouble(mainText.getText());
-                mainText.setText(String.valueOf(Math.sin(num1)));
-                additionalText.setText("");
-                calculated = true;
-            }
-        } else if (command.equals("Cos")) {
-            if (!mainText.getText().isEmpty()) {
-                num1 = Double.parseDouble(mainText.getText());
-                mainText.setText(String.valueOf(Math.cos(num1)));
-                additionalText.setText("");
-                calculated = true;
-            }
-        } else if (command.equals("Tg")) {
-            if (!mainText.getText().isEmpty()) {
-                num1 = Double.parseDouble(mainText.getText());
-                mainText.setText(String.valueOf(Math.tan(num1)));
-                additionalText.setText("");
-                calculated = true;
-            }
-        } else if (command.equals("Ctg")) {
-            if (!mainText.getText().isEmpty()) {
-                num1 = Double.parseDouble(mainText.getText());
-                mainText.setText(String.valueOf(1 / Math.tan(num1)));
-                additionalText.setText("");
-                calculated = true;
-            }
-        } else if (command.equals("MS")) {
-            memory = Double.parseDouble(mainText.getText());
-        } else if (command.equals("MR")) {
-            if (memory != 0)
-                mainText.setText(String.valueOf(memory));
-        } else if (command.equals("M+")) {
-            memory += Double.parseDouble(mainText.getText());
-        } else if (command.equals("M-")) {
-            memory -= Double.parseDouble(mainText.getText());
         } else {
-            operator = command.charAt(0);
-            num1 = Double.parseDouble(mainText.getText());
-            additionalText.setText(mainText.getText() + " " + operator);
-            mainText.setText("");
+            switch (command) {
+                case ".":
+                    if (!mainText.getText().contains("."))
+                        mainText.setText(mainText.getText() + command);
+                    break;
+                case "CE":
+                case "C":
+                    mainText.setText("0");
+                    if (command.equals("C")) {
+                        additionalText.setText("");
+                    }
+                    break;
+                case "Clear":
+                    mainText.setText(mainText.getText().substring(0, mainText.getText().length() - 1));
+                    break;
+                case "MS":
+                case "M+":
+                case "M-":
+                    if (!mainText.getText().isEmpty())
+                        memory = processMemory(memory, command, mainText.getText());
+                    break;
+                case "MR":
+                    if (memory != 0)
+                        mainText.setText(String.valueOf(memory));
+                    break;
+                default:
+                    if (command.charAt(0) == '=') {
+                        if (!additionalText.getText().isEmpty() && !mainText.getText().isEmpty()) {
+                            double num2 = Double.parseDouble(mainText.getText());
+                            double result = processNumbers(num1, num2, operator);
+                            mainText.setText(Double.toString(result));
+                            additionalText.setText("");
+                            calculated = true;
+                        }
+                    } else if (command.length() > 1) {
+                        if (!mainText.getText().isEmpty()) {
+                            num1 = Double.parseDouble(mainText.getText());
+                            double result = processNumbers(num1, command);
+                            mainText.setText(String.valueOf(result));
+                            additionalText.setText("");
+                            calculated = true;
+                        }
+                    } else {
+                        if (!mainText.getText().isEmpty()) {
+                            operator = command.charAt(0);
+                            num1 = Double.parseDouble(mainText.getText());
+                            additionalText.setText(mainText.getText() + " " + operator);
+                            mainText.setText("");
+                        }
+                    }
+                    break;
+            }
         }
     }
 
     public double processNumbers(double firstNumber, double secondNumber, char action) {
-        switch (action) {
-            case '+':
-                return firstNumber + secondNumber;
-            case '-':
-                return firstNumber - secondNumber;
-            case '*':
-                return firstNumber * secondNumber;
-            case '/':
+        return switch (action) {
+            case '+' -> firstNumber + secondNumber;
+            case '-' -> firstNumber - secondNumber;
+            case '*' -> firstNumber * secondNumber;
+            case '/' -> {
                 if (secondNumber != 0)
-                    return firstNumber / secondNumber;
+                    yield firstNumber / secondNumber;
                 else
                     throw new ArithmeticException("Cannot divide by zero");
-            case '%':
-                return (int) firstNumber % (int) secondNumber;
-            default:
-                throw new IllegalArgumentException("Invalid operator: " + action);
-        }
+            }
+            case '%' -> (int) firstNumber % (int) secondNumber;
+            default -> throw new IllegalArgumentException("Invalid operator: " + action);
+        };
+    }
+
+    public double processNumbers(double firstNumber, String action) {
+        return switch (action) {
+            case "1/x" -> {
+                if (firstNumber != 0)
+                    yield 1 / firstNumber;
+                else
+                    yield 0;
+            }
+            case "x²" -> firstNumber * firstNumber;
+            case "√x" -> Math.sqrt(firstNumber);
+            case "Sin" -> Math.sin(firstNumber);
+            case "Cos" -> Math.cos(firstNumber);
+            case "Tg" -> Math.tan(firstNumber);
+            case "Ctg" -> 1 / Math.tan(firstNumber);
+            default -> throw new IllegalArgumentException("Invalid operator: " + action);
+        };
+    }
+
+    public double processMemory(double memory, String action, String currentText) {
+        double currentNumber = Double.parseDouble(currentText);
+        return switch (action) {
+            case "MS" -> currentNumber;
+            case "M+" -> memory + currentNumber;
+            case "M-" -> memory - currentNumber;
+            default -> throw new IllegalArgumentException("Invalid operator: " + action);
+        };
     }
 
     public static void main(String[] args) {
