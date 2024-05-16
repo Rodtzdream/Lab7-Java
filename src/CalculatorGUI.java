@@ -6,6 +6,8 @@ import java.util.Objects;
 
 public class CalculatorGUI extends JFrame implements ActionListener {
 
+    private final CalculatorLogic calculatorLogic = new CalculatorLogic();
+
     private JLabel mainText;
     private JLabel additionalText;
     private final String[] buttonLabels = {
@@ -116,7 +118,7 @@ public class CalculatorGUI extends JFrame implements ActionListener {
                 case "M+":
                 case "M-":
                     if (!mainText.getText().isEmpty())
-                        memory = processMemory(memory, command, mainText.getText());
+                        memory = calculatorLogic.processMemory(memory, command, mainText.getText());
                     break;
                 case "MR":
                     if (memory != 0)
@@ -126,7 +128,7 @@ public class CalculatorGUI extends JFrame implements ActionListener {
                     if (command.charAt(0) == '=') {
                         if (!additionalText.getText().isEmpty() && !mainText.getText().isEmpty()) {
                             double num2 = Double.parseDouble(mainText.getText());
-                            double result = processNumbers(num1, num2, operator);
+                            double result = calculatorLogic.processNumbers(num1, num2, operator);
                             mainText.setText(Double.toString(result));
                             additionalText.setText("");
                             calculated = true;
@@ -134,7 +136,7 @@ public class CalculatorGUI extends JFrame implements ActionListener {
                     } else if (command.length() > 1) {
                         if (!mainText.getText().isEmpty()) {
                             num1 = Double.parseDouble(mainText.getText());
-                            double result = processNumbers(num1, command);
+                            double result = calculatorLogic.processNumbers(num1, command);
                             mainText.setText(String.valueOf(result));
                             additionalText.setText("");
                             calculated = true;
@@ -150,50 +152,6 @@ public class CalculatorGUI extends JFrame implements ActionListener {
                     break;
             }
         }
-    }
-
-    public double processNumbers(double firstNumber, double secondNumber, char action) {
-        return switch (action) {
-            case '+' -> firstNumber + secondNumber;
-            case '-' -> firstNumber - secondNumber;
-            case '*' -> firstNumber * secondNumber;
-            case '/' -> {
-                if (secondNumber != 0)
-                    yield firstNumber / secondNumber;
-                else
-                    throw new ArithmeticException("Cannot divide by zero");
-            }
-            case '%' -> (int) firstNumber % (int) secondNumber;
-            default -> throw new IllegalArgumentException("Invalid operator: " + action);
-        };
-    }
-
-    public double processNumbers(double firstNumber, String action) {
-        return switch (action) {
-            case "1/x" -> {
-                if (firstNumber != 0)
-                    yield 1 / firstNumber;
-                else
-                    yield 0;
-            }
-            case "x²" -> firstNumber * firstNumber;
-            case "√x" -> Math.sqrt(firstNumber);
-            case "Sin" -> Math.sin(firstNumber);
-            case "Cos" -> Math.cos(firstNumber);
-            case "Tg" -> Math.tan(firstNumber);
-            case "Ctg" -> 1 / Math.tan(firstNumber);
-            default -> throw new IllegalArgumentException("Invalid operator: " + action);
-        };
-    }
-
-    public double processMemory(double memory, String action, String currentText) {
-        double currentNumber = Double.parseDouble(currentText);
-        return switch (action) {
-            case "MS" -> currentNumber;
-            case "M+" -> memory + currentNumber;
-            case "M-" -> memory - currentNumber;
-            default -> throw new IllegalArgumentException("Invalid operator: " + action);
-        };
     }
 
     public static void main(String[] args) {
