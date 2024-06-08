@@ -1,6 +1,8 @@
 package com.mycalculator.ui;
 
 import com.mycalculator.logic.CalculatorLogic;
+import com.mycalculator.logic.InterpreterException;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -14,14 +16,14 @@ import java.util.Objects;
 public class CalculatorGUI extends JFrame implements ActionListener {
 
     private final CalculatorLogic calculatorLogic = new CalculatorLogic();
+    String expression = "";
 
     private JLabel mainText;
-    private JLabel additionalText;
     private final String[] buttonLabels = {
             "MS", "MR", "M+", "M-",
-            "%", "CE", "C", "Clear",
+            "%", "(", ")", "Clear",
             "Sin", "Cos", "Tg", "Ctg",
-            "1/x", "x²", "√x", "/",
+            "1/x", "^", "√x", "/",
             "7", "8", "9", "*",
             "4", "5", "6", "-",
             "1", "2", "3", "+",
@@ -51,7 +53,7 @@ public class CalculatorGUI extends JFrame implements ActionListener {
      * This includes the main label, additional text label, main text label, and buttons.
      */
     private void initComponents() {
-        JPanel centerPanel = new JPanel(new GridLayout(3, 1));
+        JPanel centerPanel = new JPanel(new GridLayout(2, 1));
 
         JLabel mainLabel = new JLabel("Calculator", SwingConstants.LEFT);
         mainLabel.setFont(new Font("Arial", Font.PLAIN, 30));
@@ -60,14 +62,6 @@ public class CalculatorGUI extends JFrame implements ActionListener {
         mainLabel.setOpaque(true);
         mainLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         centerPanel.add(mainLabel);
-
-        additionalText = new JLabel("", SwingConstants.RIGHT);
-        additionalText.setFont(new Font("Arial", Font.PLAIN, 20));
-        additionalText.setForeground(new Color(150, 150, 150));
-        additionalText.setBackground(new Color(35, 35, 35));
-        additionalText.setOpaque(true);
-        additionalText.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        centerPanel.add(additionalText);
 
         mainText = new JLabel("0", SwingConstants.RIGHT);
         mainText.setFont(new Font("Arial", Font.PLAIN, 40));
@@ -115,25 +109,28 @@ public class CalculatorGUI extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         String command = e.getActionCommand();
         if (Character.isDigit(command.charAt(0)) && command.length() == 1) {
-            if (Objects.equals(mainText.getText(), "0") || calculated)
+            if (Objects.equals(mainText.getText(), "0") || calculated) {
                 mainText.setText("");
+                expression = "";
+            }
             mainText.setText(mainText.getText() + command);
+            expression += command;
             calculated = false;
         } else {
             switch (command) {
                 case ".":
-                    if (!mainText.getText().contains("."))
+                    if (!mainText.getText().contains(".")) {
                         mainText.setText(mainText.getText() + command);
+                        expression += command;
+                    }
                     break;
                 case "CE":
                 case "C":
                     mainText.setText("0");
-                    if (command.equals("C")) {
-                        additionalText.setText("");
-                    }
                     break;
                 case "Clear":
                     mainText.setText(mainText.getText().substring(0, mainText.getText().length() - 1));
+                    expression = expression.substring(0, expression.length() - 1);
                     break;
                 case "MS":
                 case "M+":
@@ -142,32 +139,28 @@ public class CalculatorGUI extends JFrame implements ActionListener {
                         memory = calculatorLogic.processMemory(memory, command, mainText.getText());
                     break;
                 case "MR":
-                    if (memory != 0)
+                    if (memory != 0) {
                         mainText.setText(String.valueOf(memory));
+                        expression = String.valueOf(memory);
+                    }
                     break;
                 default:
                     if (command.charAt(0) == '=') {
-                        if (!additionalText.getText().isEmpty() && !mainText.getText().isEmpty()) {
-                            double num2 = Double.parseDouble(mainText.getText());
-                            double result = calculatorLogic.processNumbers(num1, num2, operator);
-                            mainText.setText(Double.toString(result));
-                            additionalText.setText("");
-                            calculated = true;
-                        }
-                    } else if (command.length() > 1) {
                         if (!mainText.getText().isEmpty()) {
-                            num1 = Double.parseDouble(mainText.getText());
-                            double result = calculatorLogic.processNumbers(num1, command);
-                            mainText.setText(String.valueOf(result));
-                            additionalText.setText("");
+                            double result = 0;
+                            try {
+                                result = calculatorLogic.parser.evaluate(expression);
+                            } catch (InterpreterException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                            mainText.setText(Double.toString(result));
                             calculated = true;
+                            expression = String.valueOf(result);
                         }
                     } else {
                         if (!mainText.getText().isEmpty()) {
-                            operator = command.charAt(0);
-                            num1 = Double.parseDouble(mainText.getText());
-                            additionalText.setText(mainText.getText() + " " + operator);
-                            mainText.setText("");
+                            mainText.setText(mainText.getText() + command);
+                            expression += command;
                         }
                     }
                     break;
@@ -180,7 +173,7 @@ public class CalculatorGUI extends JFrame implements ActionListener {
      *
      * @param args the command-line arguments (not used)
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws com.mycalculator.logic.InterpreterException {
         EventQueue.invokeLater(() -> new CalculatorGUI().setVisible(true));
     }
 }

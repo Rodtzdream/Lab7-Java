@@ -5,6 +5,7 @@ package com.mycalculator.logic;
  * It provides methods for performing various mathematical operations.
  */
 public class CalculatorLogic {
+    public Parser parser = new Parser();
 
     /**
      * Processes the given numbers with the specified action.
