@@ -2,6 +2,7 @@ package com.mycalculator.ui;
 
 import com.mycalculator.logic.CalculatorLogic;
 import com.mycalculator.logic.InterpreterException;
+import com.mycalculator.logic.Parser;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,23 +17,20 @@ import java.util.Objects;
 public class CalculatorGUI extends JFrame implements ActionListener {
 
     private final CalculatorLogic calculatorLogic = new CalculatorLogic();
-    String expression = "";
+    String expression = "0";
 
     private JLabel mainText;
     private final String[] buttonLabels = {
             "MS", "MR", "M+", "M-",
-            "%", "(", ")", "Clear",
+            "(", ")", "C", "Clear",
             "Sin", "Cos", "Tg", "Ctg",
-            "1/x", "^", "√x", "/",
+            "%", "^", "√", "/",
             "7", "8", "9", "*",
             "4", "5", "6", "-",
             "1", "2", "3", "+",
             "+/-", "0", ".", "="
     };
 
-    private double num1;
-    private char operator;
-    private boolean calculated = false;
     private double memory = 0;
 
     /**
@@ -44,7 +42,7 @@ public class CalculatorGUI extends JFrame implements ActionListener {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         initComponents();
-        setSize(430, 700);
+        setSize(350, 700);
         setLocationRelativeTo(null);
     }
 
@@ -56,7 +54,7 @@ public class CalculatorGUI extends JFrame implements ActionListener {
         JPanel centerPanel = new JPanel(new GridLayout(2, 1));
 
         JLabel mainLabel = new JLabel("Calculator", SwingConstants.LEFT);
-        mainLabel.setFont(new Font("Arial", Font.PLAIN, 30));
+        mainLabel.setFont(new Font("Arial", Font.PLAIN, 25));
         mainLabel.setForeground(Color.WHITE);
         mainLabel.setBackground(new Color(35, 35, 35));
         mainLabel.setOpaque(true);
@@ -109,28 +107,27 @@ public class CalculatorGUI extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         String command = e.getActionCommand();
         if (Character.isDigit(command.charAt(0)) && command.length() == 1) {
-            if (Objects.equals(mainText.getText(), "0") || calculated) {
+            if (Objects.equals(mainText.getText(), "0")) {
                 mainText.setText("");
                 expression = "";
             }
             mainText.setText(mainText.getText() + command);
             expression += command;
-            calculated = false;
         } else {
             switch (command) {
                 case ".":
-                    if (!mainText.getText().contains(".")) {
-                        mainText.setText(mainText.getText() + command);
-                        expression += command;
-                    }
+                    mainText.setText(mainText.getText() + command);
+                    expression += command;
                     break;
-                case "CE":
                 case "C":
                     mainText.setText("0");
+                    expression = "0";
                     break;
                 case "Clear":
-                    mainText.setText(mainText.getText().substring(0, mainText.getText().length() - 1));
-                    expression = expression.substring(0, expression.length() - 1);
+                    if (!mainText.getText().isEmpty()) {
+                        mainText.setText(mainText.getText().substring(0, mainText.getText().length() - 1));
+                        expression = expression.substring(0, expression.length() - 1);
+                    }
                     break;
                 case "MS":
                 case "M+":
@@ -144,6 +141,46 @@ public class CalculatorGUI extends JFrame implements ActionListener {
                         expression = String.valueOf(memory);
                     }
                     break;
+                case "+/-":
+                    if (!mainText.getText().isEmpty()) {
+                        if (mainText.getText().charAt(0) == '-') {
+                            mainText.setText(mainText.getText().substring(1));
+                            expression = expression.substring(1);
+                        } else {
+                            mainText.setText("-" + mainText.getText());
+                            expression = "-" + expression;
+                        }
+                    }
+                    break;
+                case "√":
+                case "Sin":
+                case "Cos":
+                case "Tg":
+                case "Ctg":
+                    if (!mainText.getText().isEmpty()) {
+                        double result = 0;
+                        try {
+                            result = calculatorLogic.processNumbers((calculatorLogic.parser.evaluate(expression)), command);
+                        } catch (InterpreterException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                        mainText.setText(Double.toString(result));
+                        expression = String.valueOf(result);
+                    }
+                    break;
+                case "(":
+                case ")": {
+                    mainText.setText(mainText.getText() + command);
+                    expression += command;
+                    break;
+                }
+                case "%":
+                case "^":
+                    if (!mainText.getText().isEmpty()) {
+                        mainText.setText(mainText.getText() + command);
+                        expression += command;
+                    }
+                    break;
                 default:
                     if (command.charAt(0) == '=') {
                         if (!mainText.getText().isEmpty()) {
@@ -151,10 +188,10 @@ public class CalculatorGUI extends JFrame implements ActionListener {
                             try {
                                 result = calculatorLogic.parser.evaluate(expression);
                             } catch (InterpreterException ex) {
+                                mainText.setText("Error");
                                 throw new RuntimeException(ex);
                             }
                             mainText.setText(Double.toString(result));
-                            calculated = true;
                             expression = String.valueOf(result);
                         }
                     } else {

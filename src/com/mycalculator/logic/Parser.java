@@ -9,19 +9,19 @@ public class Parser {
     private static final int VARIABLE = 2;
     private static final int NUMBER = 3;
     private static final int NONE = 0;
-    private static final int LE = -1;  // Dummy value, change according to actual value.
-    private static final int GE = -1;  // Dummy value, change according to actual value.
-    private static final int NE = -1;  // Dummy value, change according to actual value.
-    private static final int EOL = -1; // Dummy value, change according to actual value.
-    private static final int COMMAND = -1; // Dummy value, change according to actual value.
-    private static final int QUOTEDSTR = -1; // Dummy value, change according to actual value.
-    private static final int UNKNCOM = -1; // Dummy value, change according to actual value.
-    private static final int SYNTAX = 0; // Dummy value, change according to actual value.
-    private static final int NOEXP = 0; // Dummy value, change according to actual value.
-    private static final int DIVBYZERO = 0; // Dummy value, change according to actual value.
-    private static final int UNBALPARENS = 0; // Dummy value, change according to actual value.
-    private static final int MISSINGQUOTE = 0; // Dummy value, change according to actual value.
-    private static final int NUMVARS = 26;
+    private static final int LE = 4;  // Less than or equal to
+    private static final int GE = 5;  // Greater than or equal to
+    private static final int NE = 6;  // Not equal to
+    private static final int EOL = 7; // End of line
+    private static final int COMMAND = 8; // Command
+    private static final int QUOTEDSTR = 9; // Quoted string
+    private static final int UNKNCOM = 10; // Unknown command
+    private static final int SYNTAX = 11; // Syntax error
+    private static final int NOEXP = 12; // No expression
+    private static final int DIVBYZERO = 13; // Division by zero
+    private static final int UNBALPARENS = 14; // Unbalanced parentheses
+    private static final int MISSINGQUOTE = 15; // Missing quote
+    private static final int NUMVARS = 26; // Number of variables
 
     private String expressionPointer;
     private String token;
@@ -42,13 +42,14 @@ public class Parser {
     public double evaluate(String exp) throws InterpreterException {
         double result = 0.0;
         prog = exp.toCharArray();
+        progIdx = 0; // Reset the program index for each new expression
         getToken();
 
         if (token.equals(EOP)) {
-            handleErr(NOEXP);  // немає виразу
+            handleErr(NOEXP);  // No expression
         }
 
-        // починаємо аналіз виразу
+        // Start analyzing the expression
         result = evalExp1();
         putBack();
         return result;
@@ -60,8 +61,8 @@ public class Parser {
 
         result = evalExp2();
 
-        if (token.equals(EOP)) { // якщо досягнуто кінець програми
-            return result; // виходимо з методу
+        if (token.equals(EOP)) { // If end of program is reached
+            return result; // Exit the method
         }
 
         op = token.charAt(0);
@@ -70,7 +71,7 @@ public class Parser {
             l_temp = result;
             getToken();
             r_temp = evalExp1();
-            switch (op) { // виконати операції порівняння
+            switch (op) { // Perform comparison operations
                 case '<':
                     result = (l_temp < r_temp) ? 1.0 : 0.0;
                     break;
@@ -82,6 +83,12 @@ public class Parser {
                     break;
                 case (char) NE:
                     result = (l_temp != r_temp) ? 1.0 : 0.0;
+                    break;
+                case (char) LE:
+                    result = (l_temp <= r_temp) ? 1.0 : 0.0;
+                    break;
+                case (char) GE:
+                    result = (l_temp >= r_temp) ? 1.0 : 0.0;
                     break;
             }
         }
@@ -241,7 +248,7 @@ public class Parser {
         token = "";
         kwToken = UNKNCOM;
 
-        if (progIdx == prog.length) { // чи не досягнуто кінець програми?
+        if (progIdx == prog.length) { // End of program?
             token = EOP;
             return;
         }
@@ -256,7 +263,7 @@ public class Parser {
             return;
         }
 
-        if (prog[progIdx] == '\r') { // обробка символу '\r'
+        if (prog[progIdx] == '\r') { // Handle '\r' character
             progIdx += 2;
             kwToken = EOL;
             token = "\r\n";
@@ -296,11 +303,11 @@ public class Parser {
             return;
         }
 
-        if (isDelim(prog[progIdx])) { // Оператор
+        if (isDelim(prog[progIdx])) { // Operator
             token += prog[progIdx];
             progIdx++;
             tokType = DELIMITER;
-        } else if (Character.isLetter(prog[progIdx])) { // ключове слово
+        } else if (Character.isLetter(prog[progIdx])) { // Keyword or variable
             while (!isDelim(prog[progIdx])) {
                 token += prog[progIdx];
                 progIdx++;
@@ -315,7 +322,7 @@ public class Parser {
             } else {
                 tokType = COMMAND;
             }
-        } else if (Character.isDigit(prog[progIdx])) { // число
+        } else if (Character.isDigit(prog[progIdx])) { // Number
             while (!isDelim(prog[progIdx])) {
                 token += prog[progIdx];
                 progIdx++;
@@ -324,7 +331,7 @@ public class Parser {
                 }
             }
             tokType = NUMBER;
-        } else if (prog[progIdx] == '"') { // стрічка в лапках
+        } else if (prog[progIdx] == '"') { // Quoted string
             progIdx++;
             ch = prog[progIdx];
             while (ch != '"' && ch != '\r') {
@@ -337,7 +344,7 @@ public class Parser {
             }
             progIdx++;
             tokType = QUOTEDSTR;
-        } else { // невідомий символ
+        } else { // Unknown character
             token = EOP;
             return;
         }
@@ -352,7 +359,7 @@ public class Parser {
     }
 
     private boolean isRelop(char c) {
-        return ("<>=".indexOf(c) != -1); // Dummy implementation, adjust as needed.
+        return ("<>=".indexOf(c) != -1); // Adjust as needed.
     }
 
     private int lookUp(String token) {
@@ -361,6 +368,19 @@ public class Parser {
     }
 
     private void handleErr(int error) throws InterpreterException {
-        throw new InterpreterException("Error: " + error);
+        switch (error) {
+            case SYNTAX:
+                throw new InterpreterException("Syntax error");
+            case NOEXP:
+                throw new InterpreterException("No expression present");
+            case DIVBYZERO:
+                throw new InterpreterException("Division by zero");
+            case UNBALPARENS:
+                throw new InterpreterException("Unbalanced parentheses");
+            case MISSINGQUOTE:
+                throw new InterpreterException("Missing quote");
+            default:
+                throw new InterpreterException("Unknown error: " + error);
+        }
     }
 }
